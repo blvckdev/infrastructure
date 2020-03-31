@@ -166,3 +166,23 @@ spec:
         ingress:
           class: nginx
 ---
+ apiVersion: cert-manager.io/v1alpha2
+ kind: ClusterIssuer
+ metadata:
+   name: rancher
+   labels:
+     app: rancher
+     chart: rancher-2.3.5
+     heritage: Tiller
+     release: rancher
+ spec:
+   acme:
+     server: https://acme-v02.api.letsencrypt.org/directory
+     email: contact@qoffice.ro
+     privateKeySecretRef:
+       name: letsencrypt-production
+     solvers:
+     - http01:
+        ingress:
+          class: nginx
+---
