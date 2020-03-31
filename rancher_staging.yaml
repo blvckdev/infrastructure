@@ -146,5 +146,8 @@ spec:
      email: contact@qoffice.ro
      privateKeySecretRef:
        name: letsencrypt-production
-     http01: {}
-
+     solvers:
+     - http01:
+        ingress:
+          class: nginx
+---
