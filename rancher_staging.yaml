@@ -1,21 +1,25 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: cattle-system
 ---
+# Source: rancher/templates/serviceAccount.yaml
 kind: ServiceAccount
 apiVersion: v1
 metadata:
   name: rancher
   labels:
     app: rancher
+    chart: rancher-2.4.0
+    heritage: Helm
+    release: rancher
 ---
+# Source: rancher/templates/clusterRoleBinding.yaml
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: rancher
   labels:
     app: rancher
+    chart: rancher-2.4.0
+    heritage: Helm
+    release: rancher
 subjects:
 - kind: ServiceAccount
   name: rancher
@@ -25,27 +29,16 @@ roleRef:
   name: cluster-admin
   apiGroup: rbac.authorization.k8s.io
 ---
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: rancher2
-  labels:
-    app: rancher
-subjects:
-- kind: ServiceAccount
-  name: rancher
-  namespace: kube-system
-roleRef:
-  kind: ClusterRole
-  name: cluster-admin
-  apiGroup: rbac.authorization.k8s.io
----
+# Source: rancher/templates/service.yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: rancher
   labels:
     app: rancher
+    chart: rancher-2.4.0
+    heritage: Helm
+    release: rancher
 spec:
   ports:
   - port: 80
@@ -55,14 +48,18 @@ spec:
   selector:
     app: rancher
 ---
+# Source: rancher/templates/deployment.yaml
 kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: rancher
   labels:
     app: rancher
+    chart: rancher-2.4.0
+    heritage: Helm
+    release: rancher
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: rancher
@@ -75,6 +72,7 @@ spec:
     metadata:
       labels:
         app: rancher
+        release: rancher
     spec:
       serviceAccountName: rancher
       affinity:
@@ -90,13 +88,14 @@ spec:
                   - rancher
               topologyKey: kubernetes.io/hostname
       containers:
-      - image: rancher/rancher:v2.3.5
+      - image: rancher/rancher:v2.4.0
         imagePullPolicy: IfNotPresent
         name: rancher
         ports:
         - containerPort: 80
           protocol: TCP
         args:
+        # Public trusted CA - clear ca certs
         - "--no-cacerts"
         - "--http-listen-port=80"
         - "--https-listen-port=443"
@@ -120,23 +119,27 @@ spec:
           periodSeconds: 30
         resources:
           {}
+        volumeMounts:
+      volumes:
 ---
+# Source: rancher/templates/ingress.yaml
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: rancher
   labels:
     app: rancher
+    chart: rancher-2.4.0
+    heritage: Helm
+    release: rancher
   annotations:
-    certmanager.k8s.io/issuer: rancher
     certmanager.io/issuer: rancher
-    certmanager.io/cluster-issuer: rancher
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "1800"
 spec:
   rules:
-  - host: staging.qoffice.ro
+  - host: staging.qoffice.ro  # hostname to access rancher server
     http:
       paths:
       - backend:
@@ -147,43 +150,23 @@ spec:
     - staging.qoffice.ro
     secretName: tls-rancher-ingress
 ---
- apiVersion: cert-manager.io/v1alpha2
- kind: Issuer
- metadata:
-   name: rancher
-   labels:
-     app: rancher
-     chart: rancher-2.3.5
-     heritage: Tiller
-     release: rancher
- spec:
-   acme:
-     server: https://acme-v02.api.letsencrypt.org/directory
-     email: contact@qoffice.ro
-     privateKeySecretRef:
-       name: letsencrypt-production
-     solvers:
-     - http01:
+# Source: rancher/templates/issuer-letsEncrypt.yaml
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: rancher
+  labels:
+    app: rancher
+    chart: rancher-2.4.0
+    heritage: Helm
+    release: rancher
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: contact@qoffice.ro
+    privateKeySecretRef:
+      name: letsencrypt-production
+    solvers:
+    - http01:
         ingress:
           class: nginx
----
- apiVersion: cert-manager.io/v1alpha2
- kind: ClusterIssuer
- metadata:
-   name: rancher
-   labels:
-     app: rancher
-     chart: rancher-2.3.5
-     heritage: Tiller
-     release: rancher
- spec:
-   acme:
-     server: https://acme-v02.api.letsencrypt.org/directory
-     email: contact@qoffice.ro
-     privateKeySecretRef:
-       name: letsencrypt-production
-     solvers:
-     - http01:
-        ingress:
-          class: nginx
----
