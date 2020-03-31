@@ -1,0 +1,144 @@
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: rancher
+  labels:
+    app: rancher
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: rancher
+  labels:
+    app: rancher
+subjects:
+- kind: ServiceAccount
+  name: rancher
+  namespace: cattle-system
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rancher
+  labels:
+    app: rancher
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: rancher
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: rancher
+  labels:
+    app: rancher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rancher
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: rancher
+    spec:
+      serviceAccountName: rancher
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - rancher
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - image: rancher/rancher:v2.3.5
+        imagePullPolicy: IfNotPresent
+        name: rancher
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        args:
+        - "--no-cacerts"
+        - "--http-listen-port=80"
+        - "--https-listen-port=443"
+        - "--add-local=auto"
+        env:
+        - name: CATTLE_NAMESPACE
+          value: cattle-system
+        - name: CATTLE_PEER_SERVICE
+          value: rancher
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 30
+        resources:
+          {}
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: rancher
+  labels:
+    app: rancher
+  annotations:
+    certmanager.k8s.io/issuer: rancher
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "1800"
+spec:
+  rules:
+  - host: staging.qoffice.ro
+    http:
+      paths:
+      - backend:
+          serviceName: rancher
+          servicePort: 80
+  tls:
+  - hosts:
+    - staging.qoffice.ro
+    secretName: tls-rancher-ingress
+---
+ apiVersion: certmanager.k8s.io/v1alpha1
+ kind: Issuer
+ metadata:
+   name: rancher
+   labels:
+     app: rancher
+     chart: rancher-2.3.5
+     heritage: Tiller
+     release: rancher
+ spec:
+   acme:
+     server: https://acme-v02.api.letsencrypt.org/directory
+     email: contact@qoffice.ro
+     privateKeySecretRef:
+       name: letsencrypt-production
+     http01: {}
+
