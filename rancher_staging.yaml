@@ -37,7 +37,7 @@ roleRef:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: rancher-kube-system
+  name: rancher
   labels:
     app: rancher
     chart: rancher-2.4.0
@@ -82,7 +82,7 @@ metadata:
     heritage: Helm
     release: rancher
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: rancher
@@ -156,9 +156,6 @@ metadata:
     heritage: Helm
     release: rancher
   annotations:
-    certmanager.io/cluster-issuer: rancher
-    #nginx.ingress.kubernetes.io/tls-acme: "true"
-    #kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "1800"
@@ -174,24 +171,3 @@ spec:
   - hosts:
     - staging.qoffice.ro
     secretName: tls-rancher-ingress
----
-# Source: rancher/templates/issuer-letsEncrypt.yaml
-apiVersion: cert-manager.io/v1alpha2
-kind: ClusterIssuer
-metadata:
-  name: rancher
-  labels:
-    app: rancher
-    chart: rancher-2.4.0
-    heritage: Helm
-    release: rancher
-spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: contact@qoffice.ro
-    privateKeySecretRef:
-      name: letsencrypt-production
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
