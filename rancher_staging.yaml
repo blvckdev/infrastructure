@@ -156,9 +156,9 @@ metadata:
     heritage: Helm
     release: rancher
   annotations:
-    certmanager.io/issuer: rancher
-    nginx.ingress.kubernetes.io/tls-acme: "true"
-    kubernetes.io/tls-acme: "true"
+    certmanager.io/cluster-issuer: rancher
+    #nginx.ingress.kubernetes.io/tls-acme: "true"
+    #kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "1800"
@@ -177,7 +177,7 @@ spec:
 ---
 # Source: rancher/templates/issuer-letsEncrypt.yaml
 apiVersion: cert-manager.io/v1alpha2
-kind: Issuer
+kind: ClusterIssuer
 metadata:
   name: rancher
   labels:
