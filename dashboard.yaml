@@ -300,3 +300,25 @@ spec:
       volumes:
         - name: tmp-volume
           emptyDir: {}
+---
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata:
+  name: kubernetes-dashboard
+  namespace: kubernetes-dashboard
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    kubernetes.io/ingress.class: traefik
+spec:
+  tls:
+    - hosts:
+        - {{HOSTNAME}}
+      secretName: kubernetes-dashboard-tls
+  rules:
+    - host: {{HOSTNAME}}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: kubernetes-dashboard
+              servicePort: 443
