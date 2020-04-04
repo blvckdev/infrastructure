@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: fluentd-es-v1.20
@@ -8,6 +8,9 @@ metadata:
     kubernetes.io/cluster-service: "true"
     version: v1.20
 spec:
+  selector:
+    matchLabels:
+      k8s-app: fluentd-es
   template:
     metadata:
       labels:
@@ -24,7 +27,7 @@ spec:
           - '/usr/sbin/td-agent 2>&1 >> /var/log/fluentd.log'
         env:
           - name: LOGGLY_URL
-            value: "https://logs-01.loggly.com/inputs/{{LOGGLY_TOKEN}}/tag/k8s"
+            value: "https://logs-01.loggly.com/inputs/{{LOGGLY_TOKEN}}/tag/{{HOSTNAME}}"
         resources:
           limits:
             memory: 200Mi
