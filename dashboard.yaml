@@ -47,7 +47,7 @@ metadata:
   name: k8dash
   namespace: kube-system
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt
+    cert-manager.io/cluster-issuer: letsencrypt-staging
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
