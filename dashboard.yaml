@@ -48,6 +48,7 @@ metadata:
   namespace: kube-system
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt
+    kubernetes.io/ingress.class: traefik
 spec:
   rules:
   - host: staging.qoffice.ro
@@ -57,3 +58,7 @@ spec:
           backend:
             serviceName: k8dash
             servicePort: 80
+  tls:
+  - hosts:
+    - staging.qoffice.ro
+    secretName: dashboard-ssl-certificate
