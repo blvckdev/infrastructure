@@ -68,8 +68,10 @@ spec:
           # loggly_url "https://logs-01.loggly.com/bulk/#{ENV['LOGGLY_TOKEN']}/tag/#{ENV['LOGGLY_TAGS'] || 'fluentd'}/bulk"
           - name: LOGGLY_TOKEN
             value: {{LOGGLY_TOKEN}}
+          - name: FLUENT_CONTAINER_TAIL_EXCLUDE_PATH
+            value: '["/var/log/containers/fluentd*"]'
           - name: FLUENT_CONTAINER_TAIL_PARSER_TYPE
-            value: '/^(?<time>.+) (?<stream>stdout|stderr) [^ ]* (?<log>.*)$/'
+            value: '/^(?<time>.+?) (?<stream>stdout|stderr) [^ ]* (?<log>.*)$/'
           - name: LOGGLY_TAGS
             value: {{HOSTNAME}}
           # Depending on your configuration, adapt or remove the FLUENTD_* variables:
