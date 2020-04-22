@@ -23,9 +23,6 @@ spec:
         - name: vscode
           image: codercom/code-server
           imagePullPolicy: Always
-          env:
-            - name: ACME_AGREE
-              value: 'true'
           ports:
             - containerPort: 8080
 ---
